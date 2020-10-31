@@ -1,10 +1,12 @@
 import os
+from typing import Tuple
 
+from torch import Tensor
 from torchvision.transforms import Compose
 from torchvision import transforms
 from torch.utils.data import DataLoader
 
-from .utils import get_dataloader_base, UntargetPerturbedDataset
+from .utils import get_dataloader_base, UntargetPerturbedDataset, TriggerDataset
 from src.config import settings
 from src.attack import LinfPGDAttack
 
@@ -87,6 +89,31 @@ def get_mnist_3d_test_dataloader(*,
         shuffle=shuffle,
         transform=Compose(compose_list)
     )
+
+
+def get_trigger_mnist_3d_test_dataloader(*,
+                                         batch_size: int = settings.batch_size,
+                                         num_workers: int = settings.num_worker,
+                                         shuffle: bool = False,
+                                         normalize: bool = True,
+                                         trigger: Tensor,
+                                         trigger_size: Tuple[int, int] = (8, 8),
+                                         layer: int = 1) -> DataLoader:
+    dataloader = get_mnist_3d_test_dataloader(
+        batch_size=batch_size,
+        num_workers=num_workers,
+        shuffle=shuffle,
+        normalize=normalize
+    )
+
+    trigger_dataset = TriggerDataset(
+        dataloader=dataloader,
+        trigger=trigger,
+        trigger_size=trigger_size,
+        layer=layer
+    )
+
+    return DataLoader(trigger_dataset, shuffle=shuffle, num_workers=num_workers, batch_size=batch_size)
 
 
 def get_mnist_1d_train_dataloader(*,

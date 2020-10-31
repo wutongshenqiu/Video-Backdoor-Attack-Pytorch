@@ -8,6 +8,7 @@ from torch import Tensor
 
 from ..import logger
 from src.attack import LinfPGDAttack
+from ..utils import inject_trigger
 
 
 def get_dataloader_base(*,
@@ -54,6 +55,43 @@ class UntargetPerturbedDataset(Dataset):
         self._inputs_list = torch.cat(perturbed_inputs_tensor_list, dim=0)
         self._labels_list = torch.cat(labels_tensor_list, dim=0)
         logger.debug(f"perturbed inputs list len: {self._inputs_list}")
+        logger.debug(f"labels list len: {self._labels_list}")
+
+    def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:
+        return self._inputs_list[idx], self._labels_list[idx]
+
+    def __len__(self) -> int:
+        return self._dataset_len
+
+
+class TriggerDataset(Dataset):
+    """dataset with trigger injected in"""
+    def __init__(self, *,
+                 dataloader: DataLoader,
+                 trigger: Tensor,
+                 trigger_size: Tuple[int, int] = (8, 8),
+                 layer: int = 1) -> None:
+        logger.info("load dataset with trigger injected in")
+        logger.info(f"trigger size: {trigger_size}\n"
+                    f"layer: {layer}\n")
+
+        self._dataset_len = len(dataloader.dataset)
+
+        trigger_inputs_tensor_list = []
+        labels_tensor_list = []
+        for inputs, labels in dataloader:
+            inject_trigger(
+                inputs=inputs,
+                trigger=trigger,
+                trigger_size=trigger_size,
+                layer=layer
+            )
+            trigger_inputs_tensor_list.append(inputs)
+            labels_tensor_list.append(labels)
+
+        self._inputs_list = torch.cat(trigger_inputs_tensor_list, dim=0)
+        self._labels_list = torch.cat(labels_tensor_list, dim=0)
+        logger.debug(f"trigger inputs list len: {self._inputs_list}")
         logger.debug(f"labels list len: {self._labels_list}")
 
     def __getitem__(self, idx) -> Tuple[Tensor, Tensor]:

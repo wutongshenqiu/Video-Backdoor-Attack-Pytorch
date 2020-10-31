@@ -75,7 +75,7 @@ if __name__ == '__main__':
 
     for inputs, labels in dataloader:
         for i in range(5):
-            plt.subplot(2, 5, i+1)
+            plt.subplot(3, 5, i+1)
             plt.title(labels[i].item())
             plt.axis("off")
             plt.imshow(get_raw_image(img=inputs[i].cpu(),
@@ -89,7 +89,7 @@ if __name__ == '__main__':
             layer=3,
         )
         for i in range(5):
-            plt.subplot(2, 5, i+6)
+            plt.subplot(3, 5, i+6)
             plt.title(labels[i].item())
             plt.axis("off")
             plt.imshow(get_raw_image(img=inputs[i].cpu(),
